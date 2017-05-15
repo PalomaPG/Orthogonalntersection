@@ -31,7 +31,6 @@ public class MergeSort {
 	}
 	
 	
-	
 	private void avail_mem(){
 		System.gc();
 		Runtime rt = Runtime.getRuntime();
