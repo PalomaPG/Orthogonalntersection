@@ -143,6 +143,21 @@ public class Main {
 	    
 	}
 	
+	public static void swapInCaseAndWrite(DataOutputStream writer,double x1, double x2, double y1, double y2) throws IOException{
+		
+		if(x1<=x2 && y1<=y2)
+			writer.writeUTF(String.format("%f,%f,%f,%f", x1,y1,x2,y2).toString());
+		
+		else if(x1<=x2 && y1>y2)
+			writer.writeUTF(String.format("%f,%f,%f,%f", x1,y2,x2,y1).toString());
+		
+		else if(x1>x2 && y1<=y2)
+			writer.writeUTF(String.format("%f,%f,%f,%f", x2,y1,x1,y2).toString());
+		
+		else
+			writer.writeUTF(String.format("%f,%f,%f,%f", x2,y2,x1,y1).toString());
+	}
+	
 	public static void writeSegment(SegGen gen, boolean norm, DataOutputStream writer, int o) throws IOException{
 		
 		double x1,y1;
@@ -167,7 +182,7 @@ public class Main {
 			y2 = gen.uniccoord();
 		}
 		
-		writer.writeUTF(String.format("%f,%f,%f,%f", x1,y1,x2,y2).toString());
+		swapInCaseAndWrite(writer, x1,x2,y1,y2);
 	}
 	
 	public static void genFile(boolean norm, double init, double end, double alpha, int n, String filename){
