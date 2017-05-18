@@ -254,45 +254,74 @@ public class MergeSort {
 	}
 	
 	/*MERGE PHASE*/
-	public void mergePhase(LinkedList<String> files, CompareLines cl){
+	public void mergePhase(LinkedList<String> files, CompareLines cl, int rec){
 		/*No auxiliary files were generated, the whole input file fit into main memory*/
 		if(files.isEmpty()) return;
 		
 		else{
 			/*Calculate the # merge runs*/
-			System.out.println(String.format("# files to merge: %d",files.size()));
+			//System.out.println(String.format("# files to merge: %d",files.size()));
 			int merge_runs =(int)Math.ceil(((double)files.size())/((double)this.nb_av-1));
-			
 			if(merge_runs==1){
 				/*#files <= #available blocks in memory - 1*/
+				System.err.println(String.format("# FILES TO MERGE: %d", files.size()));
+				for(int i=0; i<files.size();i++)
+					System.err.println(files.get(i));
 				
-				RandomAccessFile [] raf_array = getRAFfromStringList(files);
-				merge_runs(raf_array, cl);
+				
+				merge_runs(files, cl, this.output);
 				
 				return;
 			}
 			
 			else{
 				
-				System.err.println("There are more files than available blocks");
-				while(merge_runs>1){
-					/*read the next nb_av-1 blocks*/
-					for(int i = 0; i<this.nb_av-1;i++){
-						
-					}
-					merge_runs--;
+				System.out.println("There are more files than available blocks");
+				LinkedList<String> out_m_files = new LinkedList<String>();
+				LinkedList<String> trim_list;
+				int run_ = 1;
+				String out_run;
+				while(run_<=merge_runs){
+					trim_list = getNextFiles(run_, this.nb_av-1, files);
+					
+					out_run = "../../out_run"+run_+"_rec_"+rec+".bin";
+					merge_runs(trim_list, cl, out_run);
+					out_m_files.add(out_run);
+					/*read the next nb_av-1 blocks
+					for(int i = 0; i<trim_list.size();i++){
+						System.out.println(trim_list.get(i));
+					}*/
+					run_++;
 			
 				}
+				rec = rec+1;
+				mergePhase(out_m_files, cl, rec);
 			}
 		}
 	}
 		
-	public void merge_runs(RandomAccessFile [] raf_array, CompareLines cl){
+	private LinkedList<String> getNextFiles(int run_, int off, LinkedList<String> files) {
+		// TODO Auto-generated method stub
+		LinkedList<String> trim_lst= new LinkedList<String>();
+		//System.out.println("Creating trimmed list");
+		for(int i=0; i<this.nb_av-1; i++){
+			try{
+				trim_lst.add(files.get(i+((run_-1)*off)));
+			}catch(IndexOutOfBoundsException e){
+				System.err.println(String.format("Error at index: %d, run: %d", i, run_));
+				break;
+			}
+		}
+		//System.out.println("Creation done: Trimmed list ready to be processed");
+		return trim_lst;
+	}
+
+	public void merge_runs(LinkedList<String> files, CompareLines cl, String out){
 		
 		LinkedList<String> reg2merge_l;
-		
+		RandomAccessFile [] raf_array = getRAFfromStringList(files);
 		try {
-			RandomAccessFile o_raf = new RandomAccessFile(this.output, "rw");
+			RandomAccessFile o_raf = new RandomAccessFile(out, "rw");
 			for( int off_buffer=0 ; off_buffer<this.nb_av; off_buffer++ ){
 				reg2merge_l = new LinkedList<String>();
 				//reg2merge = new String[files.size()*this.n_rec_per_block];
@@ -304,7 +333,8 @@ public class MergeSort {
 							String s = raf_array[raf_i].readUTF();
 							reg2merge_l.add(s);
 						}catch(EOFException e){
-							System.out.println();
+							//System.out.println();
+							break;
 						}
 					}
 				}
