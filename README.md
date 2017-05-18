@@ -57,7 +57,7 @@ This program was implemented in Java 8, so you need to install, in case you don'
 
 ## Authors
 
-* **Paloma Perez** - *Initial work* - [PurpleBooth](https://github.com/PurpleBooth)
+* **Paloma Perez** - *Initial work* - [PalomaPG](https://github.com/PalomaPG)
 
 
 ## License
