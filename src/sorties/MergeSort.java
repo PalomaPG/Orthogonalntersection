@@ -5,6 +5,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.io.EOFException;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 
@@ -31,6 +32,10 @@ public class MergeSort {
 		this.mem_percent = mem_percent;
 		this.input = input;/*input file, complete path*/
 		
+	}
+	
+	public LinkedList<String> getOFiles(){
+		return o_files;
 	}
 	
 	
@@ -166,14 +171,12 @@ public class MergeSort {
 				System.out.println("there are less available blocks than needed ones");
 				n_reads= this.nb_av*this.n_rec_per_block;
 				int r = this.runs;
-				int count = 0;
 				String o_file;
 				int aux_n = this.n;
 				o_files = new LinkedList<String>();
 				
 				while(r>0 && !eof && aux_n>0){
 					
-					count++;
 					if(aux_n > n_reads){
 						aux_n= aux_n- n_reads;
 						n_read_lines = new String[n_reads];
@@ -187,6 +190,7 @@ public class MergeSort {
 						n_read_lines = new String[aux_n];
 						o_file=  "../../out"+r+".bin";
 						read_sort_save(aux_n, eof, n_read_lines, src, o_file, cl);
+						o_files.add(o_file);
 						aux_n=0;
 					}
 					
@@ -199,7 +203,7 @@ public class MergeSort {
 				n_reads = this.n;
 				read_sort_save(n_reads, eof, n_read_lines, src, "out.txt", cl);
 
-				writeoutput(n_read_lines, "test_out.bin");
+				writeoutput(n_read_lines, this.output);
 			}
 			
 			src.close();
@@ -217,7 +221,7 @@ public class MergeSort {
 			RandomAccessFile dest = new RandomAccessFile(out_path, "rw");
 		
 			for(int i=0; i<s.length; i++){
-				dest.writeBytes(s[i]);
+				dest.writeUTF(s[i]);
 			}
 			dest.close();
 			
@@ -247,22 +251,103 @@ public class MergeSort {
 	}
 	
 	/*MERGE PHASE*/
-	public void merge_phase(LinkedList<String> files){
+	public void mergePhase(LinkedList<String> files, CompareLines cl){
+		/*No auxiliary files were generated, the whole input file fit into main memory*/
+		if(files.isEmpty()) return;
 		
-		int merge_runs =(int)Math.ceil(((double)files.size())/((double)this.nb_av-1));
-		/*Calculate the # runs*/
-		if(merge_runs==1){
-			/*#files <= #available blocks in memory - 1*/
-			int bls_per_file = (int)Math.floorDiv(this.nb_av-1, files.size());
-			int n_reg = 10;
-			String [] reg2sort = new String[n_reg];
-			return;
-		}
-		while(merge_runs>1){
+		else{
+			/*Calculate the # merge runs*/
+			System.out.println(files.size());
+			int merge_runs =(int)Math.ceil(((double)files.size())/((double)this.nb_av-1));
+			LinkedList<String> reg2merge_l;
+			String [] reg2merge;
+			
+			if(merge_runs==1){
+				/*#files <= #available blocks in memory - 1*/
+				
+				RandomAccessFile [] raf_array = getRAFfromStringList(files);
+				RandomAccessFile o_raf;
+				try {
+						o_raf = new RandomAccessFile(this.output, "rw");
+
+						for( int off_buffer=0 ; off_buffer<this.nb_av; off_buffer++ ){
+							reg2merge_l = new LinkedList<String>();
+							//reg2merge = new String[files.size()*this.n_rec_per_block];
+					
+							for(int raf_i=0; raf_i<raf_array.length;raf_i++){
+						
+								for(int i=0; i<this.n_rec_per_block; i++){
+
+									try{
+										String s = raf_array[raf_i].readUTF();
+										reg2merge_l.add(s);
+									}catch(EOFException e){
+										System.out.println();
+									}
+										
+								}
+								
+							}
+							/*Mergesort & write re2merge*/
+							reg2merge = new String[reg2merge_l.size()];
+							reg2merge_l.toArray(reg2merge);
+							main_mergesort(reg2merge, cl);
+							System.err.println("Elementos ordenados");
+							print10elements(reg2merge);
+							write_raf(reg2merge, o_raf);
+							
+
+						}
+				
+						for(int j=0; j<raf_array.length;j++)
+							raf_array[j].close();
+						
+						o_raf.close();
+						
+				} catch (FileNotFoundException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
+				catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				
+				return;
+			}
+			
+			else{
+				
+				while(merge_runs>1){
 			
 			
+				}
+			}
 		}
 	}
 	
-	
+	private void write_raf(String[] reg2merge, RandomAccessFile o_raf) throws IOException {
+		// TODO Auto-generated method stub
+		for(int i=0; i<reg2merge.length; i++){
+			//System.out.println(reg2merge[i]);
+			o_raf.writeUTF(reg2merge[i]);
+		}
+	}
+
+
+	public RandomAccessFile [] getRAFfromStringList(LinkedList<String> files){
+		
+		RandomAccessFile [] raf_array = new RandomAccessFile[files.size()];
+		
+		for(int i=0; i<files.size();i++){
+			try {
+				raf_array[i] = new RandomAccessFile(files.get(i), "r");
+			} catch (FileNotFoundException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		System.out.println(raf_array.length);
+		return raf_array;
+	}
 }

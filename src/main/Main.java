@@ -68,8 +68,11 @@ public class Main {
 			}
 			else if(args[0].equals("-e")){
 				System.err.println("Executing code over existent files");
-				MergeSort ms = new MergeSort((int)Math.pow(2, 21), 4096, 43, 0.03, "../../test_sup.bin", "result.txt");
-				ms.sort_phase(new CompareLinesInY());
+				MergeSort ms = new MergeSort((int)Math.pow(2, 21), 4096, 43, 0.03, "../../test_sup.bin", "../../result.bin");
+				CompareLines cl = new CompareLinesInY();
+				ms.sort_phase(cl);
+				ms.mergePhase(ms.getOFiles(), cl);
+				System.err.println("DONE");
 			}
 			else{
 				throw new java.lang.Error("Please, enter an execution option (and just one): -g "
