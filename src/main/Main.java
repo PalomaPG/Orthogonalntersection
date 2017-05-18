@@ -1,6 +1,5 @@
 package main;
 
-import java.io.BufferedWriter;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
@@ -8,10 +7,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
 import java.util.Set;
-import java.nio.file.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -68,7 +64,7 @@ public class Main {
 			}
 			else if(args[0].equals("-e")){
 				System.err.println("Executing code over existent files");
-				MergeSort ms = new MergeSort((int)Math.pow(2, 21), 4096, 43, 0.03, "../../test_sup.bin", "../../result.bin");
+				MergeSort ms = new MergeSort((int)Math.pow(2, 21), 4096, 43, 0.005, "../../test_sup.bin", "../../result.bin");
 				CompareLines cl = new CompareLinesInY();
 				ms.sort_phase(cl);
 				ms.mergePhase(ms.getOFiles(), cl);
