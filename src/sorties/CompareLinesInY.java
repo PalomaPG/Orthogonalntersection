@@ -1,6 +1,11 @@
 package sorties;
 
-public class CompareLinesInY implements CompareLines {
+public class CompareLinesInY extends CompareLines {
+	public CompareLinesInY(String out_file) {
+		super(out_file);
+		// TODO Auto-generated constructor stub
+	}
+
 	/*Upper extreme coordinate are scanned first*/
 	@Override
 	public int compareLines(String in1, String in2) {

@@ -1,6 +1,11 @@
 package sorties;
 
-public class CompareLinesInX implements CompareLines{
+public class CompareLinesInX extends CompareLines{
+
+	public CompareLinesInX(String out_file) {
+		super(out_file);
+		// TODO Auto-generated constructor stub
+	}
 
 	@Override
 	public int compareLines(String in1, String in2) {

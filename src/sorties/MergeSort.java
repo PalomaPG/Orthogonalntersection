@@ -2,9 +2,15 @@ package sorties;
 
 import java.util.LinkedList;
 import java.io.EOFException;
+import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 public class MergeSort {
 	/*n: # of records; l: size of (each) record; bs: page size*/
@@ -20,7 +26,7 @@ public class MergeSort {
 	private int n_comp;
 	private LinkedList<String> o_files;
 
-	public MergeSort(int n, int bs, int l,double mem_percent, String input,  String output){
+	public MergeSort(int n, int bs, int l,double mem_percent, String input){
 		
 		this.n = n;/*Number of lines*/
 		this.bs = bs;/*Block size*/
@@ -40,7 +46,7 @@ public class MergeSort {
 	}
 	
 	
-	private void avail_mem(){
+	private void availMem(){
 		System.gc();
 		Runtime rt = Runtime.getRuntime();
 		long alloc_mem = rt.totalMemory() - rt.freeMemory();
@@ -158,9 +164,9 @@ public class MergeSort {
 	
 	
 	
-	public void sort_phase(CompareLines cl){
+	public void sortPhase(CompareLines cl){
 		
-		avail_mem();
+		availMem();
 		print_sys_prop();
 		int n_reads; /*Number of records read per run*/
 		boolean eof = false;
@@ -386,5 +392,19 @@ public class MergeSort {
 		}
 		/*System.out.println(raf_array.length);*/
 		return raf_array;
+	}
+	
+	public void deleteFiles(){
+		
+	    
+	    try (DirectoryStream<Path> newDirectoryStream = Files.newDirectoryStream(Paths.get("../../"), "out*")) {
+	        for (final Path newDirectoryStreamItem : newDirectoryStream) {
+	            Files.delete(newDirectoryStreamItem);
+	        }
+	    } catch (final Exception e) {
+	        
+	        e.printStackTrace();
+	    }
+	    
 	}
 }
