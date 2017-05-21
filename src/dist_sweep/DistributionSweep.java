@@ -1,5 +1,8 @@
 package dist_sweep;
 
+import java.io.RandomAccessFile;
+import java.util.LinkedList;
+
 import sorties.*;
 
 public class DistributionSweep {
@@ -7,6 +10,7 @@ public class DistributionSweep {
 	private String input, output, x_sort, y_sort;
 	private int n_inter, pow_, bs, l_bytes;
 	private double mem_portion;
+	private MergeSort ms;
 	
 	
 	public DistributionSweep(String input, String output, int pow_, int bs, double mem_portion){
@@ -18,6 +22,7 @@ public class DistributionSweep {
 		this.bs = bs;
 		l_bytes = 43;
 		this.mem_portion = mem_portion;
+		this.ms =new MergeSort((int)Math.pow(2, this.pow_), this.bs, l_bytes, mem_portion, this.input);
 	}
 
 	public void mainDS(double min, double max){
@@ -28,20 +33,35 @@ public class DistributionSweep {
 	}
 	
 	private void sortInXandY(){
-		MergeSort ms= new MergeSort((int)Math.pow(2, this.pow_), this.bs, l_bytes, mem_portion, this.input);
 		this.x_sort="x_sort_"+this.input;
 		CompareLines cl = new CompareLinesInX(this.x_sort);
-		ms.sortPhase(cl);
-		ms.mergePhase(ms.getOFiles(), cl,0);
-		ms.deleteFiles();
+		this.ms.sortPhase(cl);
+		this.ms.mergePhase(ms.getOFiles(), cl,0);
+		this.ms.deleteFiles();
 		this.y_sort="y_sort_"+this.input;
 		cl = new CompareLinesInY(this.y_sort);
-		ms.sortPhase(cl);
-		ms.mergePhase(ms.getOFiles(), cl,0);
-		ms.deleteFiles();
+		this.ms.sortPhase(cl);
+		this.ms.mergePhase(ms.getOFiles(), cl,0);
+		this.ms.deleteFiles();
 		System.err.println("DONE");
 	}
-	public void recursiveDS(String in_x, String in_y){
+	public void recursiveDS(String file_x, String file_y){
+		
 		
 	}
+	
+	private void subSlabs(RandomAccessFile raf_in, double delta){
+		
+	}
+	
+	private LinkedList<String>[] add2List(LinkedList<String>[] ll_slabs, String s, double x, RandomAccessFile raf){
+		
+		
+		return ll_slabs;
+	}
+	
+	private LinkedList<String>[] reportIntersections(LinkedList<String>[] ll_slabs, double x1, double x2){
+		return ll_slabs;
+	}
+	
 }
