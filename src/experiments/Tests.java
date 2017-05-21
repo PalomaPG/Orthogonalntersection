@@ -12,9 +12,9 @@ public abstract class Tests {
 	private int [] io_acc, n_comps;
 	private double [] run_t;
 	private String path_;
-	private double alpha;
+	private double alpha, mem_per;
 	
-	public Tests(int min_, int max_, String path_, double alpha){
+	public Tests(int min_, int max_, String path_, double alpha, double mem_per){
 		
 		this.min_ = min_;
 		this.max_ = max_;
@@ -30,6 +30,7 @@ public abstract class Tests {
 		this.setRun_t(new double[pow_]);
 		this.alpha = alpha;
 		this.path_ = path_;
+		this.mem_per = mem_per;
 	}
 	
 	public abstract void generateTests();

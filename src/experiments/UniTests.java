@@ -1,8 +1,8 @@
 package experiments;
 
-public class GaussTests extends Tests{
+public class UniTests extends Tests{
 
-	public GaussTests(int min_, int max_, String path_, double alpha, double mem_per) {
+	public UniTests(int min_, int max_, String path_, double alpha, double mem_per) {
 		super(min_, max_, path_, alpha, mem_per);
 		// TODO Auto-generated constructor stub
 	}
