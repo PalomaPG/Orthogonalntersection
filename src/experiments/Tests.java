@@ -36,6 +36,9 @@ public abstract class Tests {
 	public abstract void generateTests();
 	public abstract void applyDS();
 
+	public void writeResults(){
+		/*Write n_recc vs io_accs, n_comps, run_t*/
+	}
 	public int [] getN_comps() {
 		return n_comps;
 	}

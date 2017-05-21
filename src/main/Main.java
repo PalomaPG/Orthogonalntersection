@@ -11,6 +11,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import dist_sweep.DistributionSweep;
 import seggen.*;
 import sorties.*;
 
@@ -71,6 +72,16 @@ public class Main {
 				ms.mergePhase(ms.getOFiles(), cl,0);
 				System.err.println("DONE");
 			}
+			else if(args[0].equals("-d")){
+				System.err.println("Executing code over existent files: DistributionSweep");
+				MergeSort ms = new MergeSort((int)Math.pow(2, 21), 4096, 43, 0.001, "test_sup.bin");
+				int bs = 4096;/*Block size*/
+				int l= 43;/*size of a record in file in bytes*/
+				int n_rec_per_block = Math.floorDiv(bs, l);
+				DistributionSweep ds = new DistributionSweep("test_sup.bin","test_sup_out.bin",4096, 0.001, ms, n_rec_per_block);
+				ds.mainDS(100, 200);
+				//DistributionSweep("../../test_sup.bin","../../test_sup_out.bin",4096, 0.001, ms, n_rec_per_block);
+			}
 			else{
 				throw new java.lang.Error("Please, enter an execution option (and just one): -g "
 						+ "(to generate files for tests) or -e (to running the program over already existent files ) ");
@@ -87,6 +98,9 @@ public class Main {
 	}
 	
 	
+
+
+
 	public static void createDir(String dir){
 		File dir_ = new File(dir);
 		

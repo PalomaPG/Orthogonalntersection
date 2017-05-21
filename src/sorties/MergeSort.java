@@ -18,7 +18,7 @@ public class MergeSort {
 	private int bs;
 	private int n_rec_per_block;
 	private int mem;
-	private int nb_av;
+	public int nb_av;
 	private int runs;
 	private String input, output;
 	private double mem_percent;
@@ -38,6 +38,7 @@ public class MergeSort {
 		this.input = input;/*input file, complete path*/
 		this.io_access = 0;
 		this.n_comp = 0;
+		this.o_files =null;
 		
 	}
 	
@@ -191,6 +192,8 @@ public class MergeSort {
 						o_file=  "../../out"+r+".bin";
 						read_sort_save(n_reads, eof, n_read_lines, src,o_file, cl);
 						o_files.add(o_file);
+						
+						System.out.println(String.format("List size: %d",o_files.size()));
 					
 					}
 					else{
@@ -199,6 +202,7 @@ public class MergeSort {
 						o_file=  "../../out"+r+".bin";
 						read_sort_save(aux_n, eof, n_read_lines, src, o_file, cl);
 						o_files.add(o_file);
+						System.out.println(String.format("List size (last run): %d",o_files.size()));
 						aux_n=0;
 					}
 					
@@ -211,7 +215,7 @@ public class MergeSort {
 				n_read_lines = new String[this.n];
 				n_reads = this.n;
 				read_sort_save(n_reads, eof, n_read_lines, src, "out.txt", cl);
-
+				this.output = cl.getOut_file();
 				writeoutput(n_read_lines, this.output);
 			}
 			
@@ -274,7 +278,8 @@ public class MergeSort {
 				for(int i=0; i<files.size();i++)
 					System.err.println(files.get(i));
 				
-				
+				System.err.println(String.format("List size... files: %d", files.size()));
+				this.output =cl.getOut_file();
 				merge_runs(files, cl, this.output);
 				
 				return;
@@ -326,6 +331,9 @@ public class MergeSort {
 		
 		LinkedList<String> reg2merge_l;
 		RandomAccessFile [] raf_array = getRAFfromStringList(files);
+		
+		System.err.println("Whhatttttt...? "+out);
+		
 		try {
 			RandomAccessFile o_raf = new RandomAccessFile(out, "rw");
 			for( int off_buffer=0 ; off_buffer<this.nb_av; off_buffer++ ){
