@@ -29,7 +29,7 @@ public class DistributionSweep {
 		/*range [min, max)*/
 		//(int)Math.pow(2, 21), 4096, 43, 0.001, "../../test_sup.bin", "../../result.bin"
 		sortInXandY();
-		recursiveDS(this.x_sort, this.y_sort);
+		recursiveDS(this.x_sort, this.y_sort, min, max);
 	}
 	
 	private void sortInXandY(){
@@ -45,7 +45,7 @@ public class DistributionSweep {
 		this.ms.deleteFiles();
 		System.err.println("DONE");
 	}
-	public void recursiveDS(String file_x, String file_y){
+	public void recursiveDS(String file_x, String file_y, double min_, double max_){
 		
 		
 	}
