@@ -132,13 +132,27 @@ public class DistributionSweep {
 		}
 	}
 	
-	private LinkedList<String>[] add2List(LinkedList<String>[] ll_slabs, String s, double x, RandomAccessFile raf){
+	private LinkedList<double []>[] add2List(LinkedList<double []>[] ll_slabs, String [] splited, double delta, double min, double max){
 		
+		double x = Double.parseDouble(splited[0]);
+		double y1 = Double.parseDouble(splited[1]);
+		double y2 = Double.parseDouble(splited[3]);
+		
+		for(int i =0; i<=ms.nb_av; i++){
+			if(min+i*delta<=x && max>x){
+				double [] ys = {y1, y2};
+				ll_slabs[i].add(ys);
+				break;
+			}
+		}
 		
 		return ll_slabs;
 	}
 	
-	private LinkedList<String>[] reportIntersections(LinkedList<String>[] ll_slabs, double x1, double x2){
+	private LinkedList<String>[] reportIntersections(LinkedList<String>[] ll_slabs, String [] splited){
+		
+		double x1 = Double.parseDouble(splited[0]);
+		double x2 = Double.parseDouble(splited[2]);
 		return ll_slabs;
 	}
 	
