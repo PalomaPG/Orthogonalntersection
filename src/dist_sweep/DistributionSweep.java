@@ -5,6 +5,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.LinkedList;
+import java.util.ListIterator;
 
 import sorties.*;
 
@@ -119,8 +120,8 @@ public class DistributionSweep {
 					aux_list.add(x2+","+split_line[1]+","+split_line[2]+","+split_line[3]);
 					line=split_line[0]+","+split_line[1]+","+x2+split_line[3];
 				}
-				
-				raf_aux.writeUTF(line);
+				if(x2-x1<delta)
+					raf_aux.writeUTF(line);
 				
 
 			}catch(EOFException e){
@@ -132,13 +133,44 @@ public class DistributionSweep {
 		}
 	}
 	
-	private LinkedList<double []>[] add2List(LinkedList<double []>[] ll_slabs, double [] splited, double delta, double min, double max){
+	private LinkedList<String>[] add2List(LinkedList<String>[] ll_slabs, String s, int [] file_counter_AL,
+			double delta, double min, double max) throws FileNotFoundException{
 		
-		for(int i =0; i<ms.nb_av-1; i++){
-			if(min+i*delta<=splited[0] && min+(i+1)*delta>splited[0]){
-				double [] ys = {splited[1], splited[3]};
-				ll_slabs[i].add(ys);
-				break;
+		String [] split_s = s.split(",");
+		double x1 = Double.parseDouble(split_s[0]);
+		double x2 = Double.parseDouble(split_s[2]);
+		if(x1==x2){
+		
+			for(int i =0; i<ms.nb_av-1; i++){
+				double min_aux = min+i*delta;
+				double max_aux = min+(i+1)*delta;
+				if(min_aux<=x1 && max_aux>x1){
+					ll_slabs[i].add(s);
+					if(ll_slabs[i].size()>=this.n_rec_per_block){
+						//write the content and empty the list
+						RandomAccessFile raf = new RandomAccessFile("AL_slab_"+min_aux+"_"+max_aux+"_"+file_counter_AL[i]+".bin" ,"rw");
+						ListIterator<String> it = ll_slabs[i].listIterator();
+						while(it.hasNext()){
+							try {
+								raf.writeUTF(it.next());
+							} catch (IOException e) {
+								// TODO Auto-generated catch block
+								e.printStackTrace();
+							}
+						}
+						try {
+							raf.close();
+						} catch (IOException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+						//write content
+						//empty list
+						file_counter_AL[i]=file_counter_AL[i]+1;
+						ll_slabs[i].clear();
+					}
+					break;
+				}
 			}
 		}
 		
@@ -150,16 +182,18 @@ public class DistributionSweep {
 		LinkedList<double []> ll_slab=null;
 		for(int i =0; i<ms.nb_av-1; i++){
 			if(min+i*delta<=splited[0] && min+(i+1)*delta>splited[0]){
-				for(int j=0; j<ll_slabs[j].size(); j++){
+				for(int j=0; j<ll_slabs[i].size(); j++){
 					//Si hay interseccion, verificar que horizontal cruza todo el intervalo, si no, no reportar
 					
 				}
 				//Eliminar las que ya estan pasadas
-				for(int j=0; j<ll_slabs[j].size(); j++){
-					if(ll_slabs[i].get(j)[0]>splited[1]){
-						ll_slabs[i].remove(j);
-					}
+				ListIterator<double []> it = ll_slabs[i].listIterator();
+				while(it.hasNext()){
+					double [] aux = it.next();
+					if(aux[0]>splited[1])
+						it.remove();
 				}
+
 				break;
 			}
 			
