@@ -1,6 +1,7 @@
 package dist_sweep;
 
 import java.io.EOFException;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -20,6 +21,7 @@ public class DistributionSweep {
 	private double mem_portion;
 	public MergeSort ms;
 	private LinkedList<String> reports;
+	private RandomAccessFile raf_output;
 	
 	
 	public DistributionSweep(String input, String output,int bs, double mem_portion, MergeSort ms, int n_rec_per_block){
@@ -33,6 +35,12 @@ public class DistributionSweep {
 		this.ms =ms;
 		this.reports = new LinkedList<String>();
 		this.n_rec_per_block = n_rec_per_block;
+		try {
+			raf_output = new RandomAccessFile(output, "rw");
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		
 	}
 
@@ -41,9 +49,12 @@ public class DistributionSweep {
 		//(int)Math.pow(2, 21), 4096, 43, 0.001, "../../test_sup.bin", "../../result.bin"
 		sortInXandY();
 		try {
+			
 			RandomAccessFile raf_in = new RandomAccessFile("../main/"+this.x_sort, "rw");
 			double delta = (max-min)/(ms.nb_av-1);
 			subSlabs(raf_in, delta,min,max,"test_");
+			this.raf_output.close();
+			
 			
 		} catch (FileNotFoundException e) {
 			// TODO Auto-generated catch block
@@ -69,13 +80,67 @@ public class DistributionSweep {
 		this.ms.deleteFiles();
 		System.err.println("DONE");
 	}
+	
 	public void recursiveDS(String file_x, String file_y, double min_, double max_){
 		
+		/*Base case*/
+		double delta = max_-min_/(ms.nb_av-1);
+		int [] file_AL = new int[ms.nb_av-1];
+		LinkedList<String>[] ll_slabs= new LinkedList[ms.nb_av-1];
+		String s;
+		for(int i=0; i<ms.nb_av-1; i++){
+			ll_slabs[i] = new LinkedList<String>();
+		}
+		boolean eof = false;
+		if(new File(file_x).length()<=ms.nb_av*bs){
+			/*Don't perform recursive call*/
+			/*Sweep from top to bottom*/
+			
+			try {
+				RandomAccessFile raf_y = new RandomAccessFile(file_y,"r");
+				while(!eof){
+					s = raf_y.readUTF();
+					ll_slabs=add2List(ll_slabs, s, file_AL, delta, min_, max_);
+					ll_slabs=reportIntersections(ll_slabs, file_AL, s, min_, max_, delta);
+				}
+				raf_y.close();
+			} catch (FileNotFoundException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		else{
+			/*Perform recursive call*/
+			RandomAccessFile raf_y;
+			try {
+				raf_y = new RandomAccessFile(file_y,"r");
+
+				while(!eof){
+					s = raf_y.readUTF();
+					ll_slabs=add2List(ll_slabs, s, file_AL, delta, min_, max_);
+					ll_slabs=reportIntersections(ll_slabs, file_AL, s, min_, max_, delta);
+				}
+				
+				raf_y.close();
+				
+				subSlabs(new RandomAccessFile(file_x, "r"), delta, min_, max_, "prefix");
+				
+			} catch (FileNotFoundException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
 		
 	}
 	
 	private void subSlabs(RandomAccessFile raf_in, double delta, double min, double max, String prefix_file) throws IOException{
-		
+		/*Generate linkedList with all the files created*/
 		boolean eof = false; 
 
 		String line;
@@ -177,26 +242,57 @@ public class DistributionSweep {
 		return ll_slabs;
 	}
 	
-	private LinkedList<double []>[] reportIntersections(LinkedList<double []>[] ll_slabs, double [] splited, String inter, double min, double max, double delta){
+	private LinkedList<String>[] reportIntersections(LinkedList<String>[] ll_slabs, int [] file_counter_AL,String s,double min, double max, double delta){
 		
-		LinkedList<double []> ll_slab=null;
-		for(int i =0; i<ms.nb_av-1; i++){
-			if(min+i*delta<=splited[0] && min+(i+1)*delta>splited[0]){
-				for(int j=0; j<ll_slabs[i].size(); j++){
-					//Si hay interseccion, verificar que horizontal cruza todo el intervalo, si no, no reportar
+		String [] split_s = s.split(",");
+		double x1 = Double.parseDouble(split_s[0]);
+		double x2 = Double.parseDouble(split_s[2]);
+		double y1 = Double.parseDouble(split_s[1]);
+		
+		if(x1!=x2){
+			for(int i =0; i<ms.nb_av-1; i++){
+				if(min+i*delta>=x1 && min+(i+1)*delta<=x2){
+					/*1. Check over active list in main memory*/
+						/*Check if there are elements in active list if not, search in files*/
+					if(ll_slabs[i].size()>0){
+						ListIterator<String> it = ll_slabs[i].listIterator();
+						while(it.hasNext()){
+							
+							String aux_s = it.next();
+							String [] aux_split = aux_s.split(",");
+							double y = Double.parseDouble(aux_split[1]);
+							if(y>y1) it.remove();
+							else{
+								try {
+									this.raf_output.writeUTF(aux_split[0]+","+y1);
+								} catch (IOException e) {
+									// TODO Auto-generated catch block
+									e.printStackTrace();
+								}
+									/*report intersection*/
+								
+							}
+						}
+					}
+					
+					/*2. Check over files */
+						/*Check if there are files, if not return*/
+					if(file_counter_AL[i]>0){
+						if(ll_slabs[i].size()>0){
+							/*Write the current active list into a file, and empty it*/
+							
+						}
+						/*Load the active list with old vertical segments from previous readings*/
+						for(int j = 0; j<file_counter_AL[i]; i++){
+							/*Read and process the content of every file one by one
+							 * then recreate the new list, even if it contains lesser objects than before*/
+						}
+					}
+					
+						/*If there are files, read them one by one, write the current active list in "current" file*/
 					
 				}
-				//Eliminar las que ya estan pasadas
-				ListIterator<double []> it = ll_slabs[i].listIterator();
-				while(it.hasNext()){
-					double [] aux = it.next();
-					if(aux[0]>splited[1])
-						it.remove();
-				}
-
-				break;
 			}
-			
 		}
 		return ll_slabs;
 	}
