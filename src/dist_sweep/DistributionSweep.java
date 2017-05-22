@@ -146,7 +146,7 @@ public class DistributionSweep {
 	}
 	
 	private LinkedList<double []>[] reportIntersections(LinkedList<double []>[] ll_slabs, double [] splited, String inter, double min, double max, double delta){
-
+		
 		LinkedList<double []> ll_slab=null;
 		for(int i =0; i<ms.nb_av-1; i++){
 			if(min+i*delta<=splited[0] && min+(i+1)*delta>splited[0]){
