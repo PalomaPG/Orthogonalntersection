@@ -41,7 +41,7 @@ public class DistributionSweep {
 		sortInXandY();
 		try {
 			RandomAccessFile raf_in = new RandomAccessFile("../main/"+this.x_sort, "rw");
-			double delta = (max-min)/ms.nb_av;
+			double delta = (max-min)/(ms.nb_av-1);
 			subSlabs(raf_in, delta,min,max,"test_");
 			
 		} catch (FileNotFoundException e) {
@@ -132,15 +132,11 @@ public class DistributionSweep {
 		}
 	}
 	
-	private LinkedList<double []>[] add2List(LinkedList<double []>[] ll_slabs, String [] splited, double delta, double min, double max){
+	private LinkedList<double []>[] add2List(LinkedList<double []>[] ll_slabs, double [] splited, double delta, double min, double max){
 		
-		double x = Double.parseDouble(splited[0]);
-		double y1 = Double.parseDouble(splited[1]);
-		double y2 = Double.parseDouble(splited[3]);
-		
-		for(int i =0; i<=ms.nb_av; i++){
-			if(min+i*delta<=x && max>x){
-				double [] ys = {y1, y2};
+		for(int i =0; i<ms.nb_av-1; i++){
+			if(min+i*delta<=splited[0] && min+(i+1)*delta>splited[0]){
+				double [] ys = {splited[1], splited[3]};
 				ll_slabs[i].add(ys);
 				break;
 			}
@@ -149,10 +145,25 @@ public class DistributionSweep {
 		return ll_slabs;
 	}
 	
-	private LinkedList<String>[] reportIntersections(LinkedList<String>[] ll_slabs, String [] splited){
-		
-		double x1 = Double.parseDouble(splited[0]);
-		double x2 = Double.parseDouble(splited[2]);
+	private LinkedList<double []>[] reportIntersections(LinkedList<double []>[] ll_slabs, double [] splited, String inter, double min, double max, double delta){
+
+		LinkedList<double []> ll_slab=null;
+		for(int i =0; i<ms.nb_av-1; i++){
+			if(min+i*delta<=splited[0] && min+(i+1)*delta>splited[0]){
+				for(int j=0; j<ll_slabs[j].size(); j++){
+					//Si hay interseccion, verificar que horizontal cruza todo el intervalo, si no, no reportar
+					
+				}
+				//Eliminar las que ya estan pasadas
+				for(int j=0; j<ll_slabs[j].size(); j++){
+					if(ll_slabs[i].get(j)[0]>splited[1]){
+						ll_slabs[i].remove(j);
+					}
+				}
+				break;
+			}
+			
+		}
 		return ll_slabs;
 	}
 	
