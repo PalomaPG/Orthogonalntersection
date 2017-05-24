@@ -57,6 +57,7 @@ public class DistributionSweep {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		System.err.println("Number of intersections found "+this.n_inter);
 		//recursiveDS(this.x_sort, this.y_sort, min, max);
 	}
 	
@@ -370,6 +371,7 @@ public class DistributionSweep {
 			else{
 				try {
 					this.raf_output.writeUTF(aux_split[0]+","+y1);
+					this.n_inter++;
 				} catch (IOException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();

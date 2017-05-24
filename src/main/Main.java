@@ -6,7 +6,13 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FilenameFilter;
 import java.io.IOException;
+import java.io.RandomAccessFile;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -24,23 +30,15 @@ public class Main {
 			throw new java.lang.Error("Please, enter an execution option (and just one): -g "
 					+ "(to generate files for tests) or -e (to running the program over already existent files ) ");
 		}
-		
+		double [] alpha = {0.25, 0.5, 0.75};
 		if(args[0].length()==2){
 			if(args[0].equals("-g")){
 				System.err.println("Generating files");
 				int init = 100;
 				int end = 200;
-				String data_dir = "../../data/";
-				String gauss_dir = "GAUSSIAN_DISTR/";
-				String uni_dir = "UNIFORM_DISTR/";
-				createDir(data_dir);
-				gauss_dir = data_dir+gauss_dir;
-				createDir(gauss_dir);
-				uni_dir = data_dir+uni_dir;
-				createDir(uni_dir);
 				
-				double [] alpha = {0.25, 0.5, 0.75};
-				Set <Integer> range = IntStream.rangeClosed(9, 10).boxed().collect(Collectors.toSet());
+				
+				Set <Integer> range = IntStream.rangeClosed(9, 21).boxed().collect(Collectors.toSet());
 				Integer [] expr = (Integer[])range.toArray(new Integer[range.size()]);
 				
 				System.err.println("Gaussian distribution");
@@ -49,7 +47,7 @@ public class Main {
 					for(int i=0; i<expr.length; i++){
 						int n =(int)Math.pow(2,expr[i]);
 						String filename = String.format("gauss_%d_%d.bin", (int)(alpha[j]*100),expr[i]);
-						genFile(true, init, end, alpha[j], n, gauss_dir+filename);
+						genFile(true, init, end, alpha[j], n, filename);
 					}
 				}
 				
@@ -58,27 +56,125 @@ public class Main {
 					for(int i=0; i<expr.length; i++){
 						int n =(int)Math.pow(2,expr[i]);
 						String filename = String.format("uni_%d_%d.bin", (int)(alpha[j]*100),expr[i]);
-						genFile(false, init, end, alpha[j], n, uni_dir+filename);
+						genFile(false, init, end, alpha[j], n, filename);
 					}
 				}
 
 			}
-			else if(args[0].equals("-e")){
+			else if(args[0].equals("-m")){
 				System.err.println("Executing code over existent files");
-				MergeSort ms = new MergeSort((int)Math.pow(2, 21), 4096, 43, 0.001, "../../test_sup.bin");
-				ms.deleteFiles();
-				CompareLines cl = new CompareLinesInY("../../result_sup.bin");
-				ms.sortPhase(cl);
-				ms.mergePhase(ms.getOFiles(), cl,0);
+				/*List all files of a certain distribution and alpha ratio*/
+
+				/*List files of gaussian distribution*/
+				Path currentRelativePath = Paths.get("");
+				String s = currentRelativePath.toAbsolutePath().toString();
+				File dir = new File(s);
+				RandomAccessFile raf;
+
+				for(double a : alpha){
+					
+					int alpha_ = (int) (a*100);
+					raf =  new RandomAccessFile("gauss_param_measurements"+alpha_+".csv", "rw");
+					File [] files = dir.listFiles(new FilenameFilter() {
+						@Override
+					    public boolean accept(File dir, String name) {
+					        return name.matches("gauss_"+alpha_+"_(.*).bin");
+					    }
+					});
+					
+					for (File file_ : files) {
+						//System.err.println(file_);
+						int n_reg = Integer.parseInt((file_.getName().split("_|.bin")[2]));
+						MergeSort ms = new MergeSort((int)Math.pow(2, n_reg), 4096, 43, 0.001, file_.getName());
+						ms.deleteFiles();
+						CompareLines cl = new CompareLinesInX("x_sorted_"+file_.getName());
+						ms.sortPhase(cl);
+						ms.mergePhase(ms.getOFiles(), cl,0);
+						ms.deleteFiles();
+						cl = new CompareLinesInX("y_sorted_"+file_.getName());
+						ms.sortPhase(cl);
+						ms.mergePhase(ms.getOFiles(), cl,0);
+						ms.deleteFiles();
+						try {
+							raf.writeUTF(String.format("%d,%d,%d", ms.getIO_access(), ms.getN_comp(), ms.getEnd_time()-ms.getInit_time()));
+						} catch (IOException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+						//System.err.println(String.format("IO accesses: %d, Comparisions: %d, RT (ms): %d", 
+						//	ms.getIO_access(), ms.getN_comp(), ms.getEnd_time()-ms.getInit_time()));
+					}
+					try {
+						raf.close();
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				}
+				
+				
+				for(double a : alpha){
+					
+					int alpha_ = (int) (a*100);
+					raf =  new RandomAccessFile("uni_param_measurements"+alpha_+".csv", "rw");
+					File [] files = dir.listFiles(new FilenameFilter() {
+						@Override
+					    public boolean accept(File dir, String name) {
+					        return name.matches("uni_"+alpha_+"_(.*).bin");
+					    }
+					});
+					
+					for (File file_ : files) {
+						//System.err.println(file_);
+						int n_reg = Integer.parseInt((file_.getName().split("_|.bin")[2]));
+						MergeSort ms = new MergeSort((int)Math.pow(2, n_reg), 4096, 43, 0.001, file_.getName());
+						ms.deleteFiles();
+						CompareLines cl = new CompareLinesInX("x_sorted_"+file_.getName());
+						ms.sortPhase(cl);
+						ms.mergePhase(ms.getOFiles(), cl,0);
+						ms.deleteFiles();
+						cl = new CompareLinesInX("y_sorted_"+file_.getName());
+						ms.sortPhase(cl);
+						ms.mergePhase(ms.getOFiles(), cl,0);
+						ms.deleteFiles();
+						try {
+							raf.writeUTF(String.format("%d,%d,%d", ms.getIO_access(), ms.getN_comp(), ms.getEnd_time()-ms.getInit_time()));
+						} catch (IOException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+						//System.err.println(String.format("IO accesses: %d, Comparisions: %d, RT (ms): %d", 
+						//	ms.getIO_access(), ms.getN_comp(), ms.getEnd_time()-ms.getInit_time()));
+
+					}
+					try {
+						raf.close();
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+					
+				}
+				
 				System.err.println("DONE");
+			}
+			else if(args[0].equals("-t")){
+				String s1 = "gauss_50_12.bin";
+				String s2 = "uni_75_9.bin";
+				
+				String [] s1_split = s1.split("_|.bin");
+				System.err.println(s1_split[2]);
+				
+				String [] s2_split = s2.split("_|.bin");
+				System.err.println(s2_split[2]);
 			}
 			else if(args[0].equals("-d")){
 				System.err.println("Executing code over existent files: DistributionSweep");
-				MergeSort ms = new MergeSort((int)Math.pow(2, 21), 4096, 43, 0.001, "test_sup.bin");
+				MergeSort ms = new MergeSort((int)Math.pow(2, 9), 4096, 43, 0.001, "test.bin");
 				int bs = 4096;/*Block size*/
 				int l= 43;/*size of a record in file in bytes*/
 				int n_rec_per_block = Math.floorDiv(bs, l);
-				DistributionSweep ds = new DistributionSweep("test_sup.bin","test_sup_out.bin",4096, 0.001, ms, n_rec_per_block);
+				DistributionSweep ds = new DistributionSweep("test.bin","test_out.bin",4096, 0.001, ms, n_rec_per_block);
 				ds.mainDS(100, 200);
 				//DistributionSweep("../../test_sup.bin","../../test_sup_out.bin",4096, 0.001, ms, n_rec_per_block);
 			}
@@ -178,27 +274,33 @@ public class Main {
 		
 		double x1,y1;
 		double x2, y2;
-		if(norm){
-			x1 = gen.normccoord(49.5, 0.09);
-			y1 = gen.uniccoord();
-		}
-		else{
-			x1 = gen.uniccoord();
-			y1 = gen.uniccoord();
-		}
+
 		
 		if(o==0){
 			/*Constant in y*/
+			y1=gen.uniccoord();
 			y2 = y1;
 			x2 = gen.uniccoord();
+			x1 = gen.uniccoord();
 		}
 		else{
 			/*Constant in x*/
-			x2 = x1;
-			y2 = gen.uniccoord();
+			if(norm){
+				x1=gen.normccoord(49.5, 0.09);
+				x2 = x1;
+				y1 = gen.uniccoord();
+				y2 = gen.uniccoord();
+			}
+			else{
+				x1=gen.uniccoord();
+				x2=x1;
+				y1 = gen.uniccoord();
+				y2 = gen.uniccoord();
+				
+			}
 		}
 		
-		swapInCaseAndWrite(writer, x1,x2,y1,y2);
+		swapInCaseAndWrite(writer,x1,x2,y1,y2);
 	}
 	
 	public static void genFile(boolean norm, double init, double end, double alpha, int n, String filename){

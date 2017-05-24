@@ -24,6 +24,7 @@ public class MergeSort {
 	private double mem_percent;
 	private int io_access;
 	private int n_comp;
+	private long init_time, end_time;
 	private LinkedList<String> o_files;
 
 	public MergeSort(int n, int bs, int l,double mem_percent, String input){
@@ -36,9 +37,9 @@ public class MergeSort {
 		this.output = output;/*output file, complete path*/
 		this.mem_percent = mem_percent;
 		this.input = input;/*input file, complete path*/
-		this.io_access = 0;
-		this.n_comp = 0;
-		this.o_files =null;
+		this.setIO_access(0);
+		this.setN_comp(0);
+		this.o_files = new LinkedList<String>();
 		
 	}
 	
@@ -112,38 +113,49 @@ public class MergeSort {
 		
         int i = 0, j = 0, k = 0;  
         
-        while(s1.length != j && s2.length != k) {  
+        while(s1.length != j && s2.length != k) {
+        	
             if(cl.compareLines(s1[j],s2[k])<=0) {  
                 s[i] = s1[j];  
                 i++;  
-                j++;  
+                j++;
+                this.setN_comp(this.getN_comp() + 1);
             } else {  
                 s[i] = s2[k];  
                 i++;  
-                k++;  
-            }  
+                k++;
+                this.setN_comp(this.getN_comp() + 1);
+            }
+            
         }
         
-        while(s1.length != j) {  
-            s[i] = s1[j];  
-            i++;  
-            j++;  
+        while(s1.length != j) { 
+        	
+        		s[i] = s1[j];  
+        		i++;  
+        		j++;
+        	
         }  
-        while(s2.length != k) {  
-            s[i] = s2[k];  
-            i++;  
-            k++;  
+        while(s2.length != k) { 
+
+        		s[i] = s2[k];  
+        		i++;  
+        		k++;
+        	
         } 
 
 	}
 
-	public void read_sort_save(int n_reads, boolean eof, String [] n_read_lines, RandomAccessFile src, String out_file,
+	public void read_sort_save(int n_reads, boolean eof, LinkedList<String> n_read_lines, RandomAccessFile src, String out_file,
 			CompareLines cl){
 
 		for(int i=0; i<n_reads && !eof; i++){
 			
 			try{
-				n_read_lines[i]=src.readUTF();
+				String s = src.readUTF();
+				if(s==null) break;
+				n_read_lines.add(s);
+				this.setIO_access(this.getIO_access() + 1);
 			}catch(EOFException e){
 				eof=true;
 			} catch (IOException e) {
@@ -157,7 +169,7 @@ public class MergeSort {
 		
 		//System.out.println(String.format("# estimated lines: %d", n_reads));
 		//System.out.println(String.format("real # of lines: %d", lines));
-		main_mergesort(n_read_lines, cl);
+		main_mergesort(n_read_lines.toArray(new String[n_reads]), cl);
 		//System.out.println("lines after sorting");
 		//print10elements(n_read_lines);
 		writeoutput(n_read_lines, out_file);
@@ -166,12 +178,12 @@ public class MergeSort {
 	
 	
 	public void sortPhase(CompareLines cl){
-		
+		this.setInit_time(System.currentTimeMillis());
 		availMem();
 		print_sys_prop();
 		int n_reads; /*Number of records read per run*/
 		boolean eof = false;
-		String [] n_read_lines;
+		LinkedList<String> n_read_lines;
 		
 		try{
 			RandomAccessFile src = new RandomAccessFile(this.input, "r");
@@ -188,21 +200,21 @@ public class MergeSort {
 					
 					if(aux_n > n_reads){
 						aux_n= aux_n- n_reads;
-						n_read_lines = new String[n_reads];
+						n_read_lines = new LinkedList<String>();
 						o_file=  "../../out"+r+".bin";
 						read_sort_save(n_reads, eof, n_read_lines, src,o_file, cl);
 						o_files.add(o_file);
 						
-						System.out.println(String.format("List size: %d",o_files.size()));
+						//System.out.println(String.format("List size: %d",o_files.size()));
 					
 					}
 					else{
 						
-						n_read_lines = new String[aux_n];
+						n_read_lines = new LinkedList<String>();
 						o_file=  "../../out"+r+".bin";
 						read_sort_save(aux_n, eof, n_read_lines, src, o_file, cl);
 						o_files.add(o_file);
-						System.out.println(String.format("List size (last run): %d",o_files.size()));
+						//System.out.println(String.format("List size (last run): %d",o_files.size()));
 						aux_n=0;
 					}
 					
@@ -212,7 +224,7 @@ public class MergeSort {
 			else{
 				
 				System.out.println("are enough available blocks");
-				n_read_lines = new String[this.n];
+				n_read_lines = new LinkedList<String>();
 				n_reads = this.n;
 				read_sort_save(n_reads, eof, n_read_lines, src, "out.txt", cl);
 				this.output = cl.getOut_file();
@@ -228,13 +240,14 @@ public class MergeSort {
 	}
 	
 	
-	public void writeoutput(String [] s, String out_path){
+	public void writeoutput(LinkedList<String> s, String out_path){
 		
 		try{
 			RandomAccessFile dest = new RandomAccessFile(out_path, "rw");
 		
-			for(int i=0; i<s.length; i++){
-				dest.writeUTF(s[i]);
+			for(int i=0; i<s.size(); i++){
+				dest.writeUTF(s.get(i));
+				this.setIO_access(this.getIO_access() + 1);
 			}
 			dest.close();
 			
@@ -266,7 +279,10 @@ public class MergeSort {
 	/*MERGE PHASE*/
 	public void mergePhase(LinkedList<String> files, CompareLines cl, int rec){
 		/*No auxiliary files were generated, the whole input file fit into main memory*/
-		if(files.isEmpty()) return;
+		if(files.isEmpty()) {
+			this.setEnd_time(System.currentTimeMillis());
+			return;
+			}
 		
 		else{
 			/*Calculate the # merge runs*/
@@ -278,10 +294,10 @@ public class MergeSort {
 				for(int i=0; i<files.size();i++)
 					System.err.println(files.get(i));
 				
-				System.err.println(String.format("List size... files: %d", files.size()));
+				//System.err.println(String.format("List size... files: %d", files.size()));
 				this.output =cl.getOut_file();
 				merge_runs(files, cl, this.output);
-				
+				this.setEnd_time(System.currentTimeMillis());
 				return;
 			}
 			
@@ -331,9 +347,7 @@ public class MergeSort {
 		
 		LinkedList<String> reg2merge_l;
 		RandomAccessFile [] raf_array = getRAFfromStringList(files);
-		
-		System.err.println("Whhatttttt...? "+out);
-		
+				
 		try {
 			RandomAccessFile o_raf = new RandomAccessFile(out, "rw");
 			for( int off_buffer=0 ; off_buffer<this.nb_av; off_buffer++ ){
@@ -345,6 +359,7 @@ public class MergeSort {
 
 						try{
 							String s = raf_array[raf_i].readUTF();
+							this.setIO_access(this.getIO_access() + 1);
 							reg2merge_l.add(s);
 						}catch(EOFException e){
 							//System.out.println();
@@ -382,6 +397,7 @@ public class MergeSort {
 		for(int i=0; i<reg2merge.length; i++){
 			//System.out.println(reg2merge[i]);
 			o_raf.writeUTF(reg2merge[i]);
+			this.setIO_access(this.getIO_access() + 1);
 		}
 	}
 
@@ -414,5 +430,37 @@ public class MergeSort {
 	        e.printStackTrace();
 	    }
 	    
+	}
+
+	public int getIO_access() {
+		return io_access;
+	}
+
+	public void setIO_access(int io_access) {
+		this.io_access = io_access;
+	}
+
+	public int getN_comp() {
+		return n_comp;
+	}
+
+	public void setN_comp(int n_comp) {
+		this.n_comp = n_comp;
+	}
+
+	public long getInit_time() {
+		return init_time;
+	}
+
+	public void setInit_time(long init_time) {
+		this.init_time = init_time;
+	}
+
+	public long getEnd_time() {
+		return end_time;
+	}
+
+	public void setEnd_time(long end_time) {
+		this.end_time = end_time;
 	}
 }
